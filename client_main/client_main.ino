@@ -3,6 +3,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <Adafruit_NeoPixel.h>
+#include <NTPClient.h>
+#include <ESP8266WebServer.h>
 
 #define RELAY_PIN     16  //D0 (was D2)
 #define BUZZER_PIN    5   //D1
@@ -32,6 +34,21 @@ Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
+
+ESP8266WebServer server(80);
+String logBuffer = "";
+
+void log(String message) {
+  logBuffer += message + "\n";  // Store logs in a buffer
+  Serial.println(message);  // Print to Serial too (if USB is connected)
+}
+
+void handleLogs() {
+  server.send(200, "text/plain", logBuffer);
+}
+
 void ledTest();
 void testBuzzer();
 void relayTest();
@@ -43,6 +60,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
+  log("Booting...");
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     delay(5000);
     ESP.restart();
@@ -51,6 +69,13 @@ void setup() {
   ArduinoOTA.setHostname("dormCheck_node_1");
   ArduinoOTA.setPassword("admin");
   ArduinoOTA.begin();
+
+  timeClient.begin();
+
+  log("\nConnected to WiFi!");
+
+  server.on("/logs", handleLogs);
+  server.begin();
 
   pixels.begin();
   pixels.clear();
@@ -62,10 +87,20 @@ void setup() {
 
 void loop() {
   ArduinoOTA.handle();
+  server.handleClient();
+  timeClient.update();
+  
+  String formattedDateTime = timeClient.getFormattedDate();
+  int splitT = formattedDateTime.indexOf("T");
+  String dateStamp = formattedDateTime.substring(0, splitT);
+  String timeStamp = formattedDateTime.substring(splitT + 1, formattedDateTime.length() - 1);
+  
+  log("NTP Date: " + dateStamp + " Time: " + timeStamp);
+  
+  delay(5000);
   //ledTest();
   //testBuzzer();
   //relayTest();
-
 }
 
 //////////////////// NEOPIXEL ////////////////////////////
