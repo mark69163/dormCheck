@@ -4,8 +4,8 @@
 #include <ArduinoOTA.h>
 #include <Adafruit_NeoPixel.h>
 
+#define RELAY_PIN     16  //D0 (was D2)
 #define BUZZER_PIN    5   //D1
-#define RELAY_PIN     4   //D2
 #define NEOPIXEL_PIN  15  //D8
 #define NUMPIXELS     8   //number of RGB LEDs 
 
@@ -56,7 +56,7 @@ void setup() {
   pixels.clear();
   pixels.show();
   
-  //digitalWrite(RELAY_PIN,HIGH);
+  digitalWrite(RELAY_PIN,HIGH);
   digitalWrite(BUZZER_PIN,LOW);
 }
 
@@ -64,7 +64,8 @@ void loop() {
   ArduinoOTA.handle();
   //ledTest();
   //testBuzzer();
-  relayTest();
+  //relayTest();
+
 }
 
 //////////////////// NEOPIXEL ////////////////////////////
@@ -112,14 +113,8 @@ void testBuzzer() {
 
 //////////////////// RELAY ////////////////////////////
 void relayTest(){
-  static unsigned long previousMillis = 0;
-  const unsigned long interval = 500;
   static bool relayState = false;
-
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    relayState = !relayState;
-    digitalWrite(RELAY_PIN, relayState ? HIGH : LOW);
-  }
+  relayState = !relayState;
+  digitalWrite(RELAY_PIN, relayState ? HIGH : LOW);
+  delay(1000);
 }
