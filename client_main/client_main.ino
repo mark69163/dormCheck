@@ -6,6 +6,9 @@
 #include <NTPClient.h>
 #include <ESP8266WebServer.h>
 
+#include <SPI.h>
+#include <MFRC522.h>
+
 #define RELAY_PIN     16  //D0 (was D2)
 #define BUZZER_PIN    5   //D1
 #define NEOPIXEL_PIN  15  //D8
@@ -24,7 +27,11 @@ Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
   MOSI	GPIO 13 (D7)
 */
 
-#define RFID_CS_PIN   2   //D4
+#define RFID_SS_PIN   2   //D4
+#define RST_PIN       0   //D3 
+
+MFRC522 rfid(RFID_SS_PIN, RST_PIN);  // Create MFRC522 instance
+
 
 #ifndef STASSID
 #define STASSID   "Mark-wifi-2.4G"
@@ -42,7 +49,7 @@ String logBuffer = "";
 
 void log(String message) {
   logBuffer += message + "\n";  // Store logs in a buffer
-  Serial.println(message);  // Print to Serial too (if USB is connected)
+  //Serial.println(message);  // Print to Serial too (if USB is connected)
 }
 
 void handleLogs() {
@@ -54,6 +61,9 @@ void testBuzzer();
 void relayTest();
 
 void setup() {
+  SPI.begin();			// Init SPI bus
+  rfid.PCD_Init();		// Init MFRC522
+  
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(RELAY_PIN,OUTPUT);
 
@@ -95,9 +105,16 @@ void loop() {
   String dateStamp = formattedDateTime.substring(0, splitT);
   String timeStamp = formattedDateTime.substring(splitT + 1, formattedDateTime.length() - 1);
   
-  log("NTP Date: " + dateStamp + " Time: " + timeStamp);
+  //log("NTP Date: " + dateStamp + " Time: " + timeStamp);
+    if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    String uid = "";
+    for (byte i = 0; i < rfid.uid.size; i++) {
+      uid += String(rfid.uid.uidByte[i], HEX);
+    }
+    log("UID: " + uid + " | Date: " + dateStamp + " | Time: " + timeStamp);
+    rfid.PICC_HaltA();
+  }
   
-  delay(5000);
   //ledTest();
   //testBuzzer();
   //relayTest();
