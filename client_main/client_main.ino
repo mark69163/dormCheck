@@ -2,19 +2,17 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <Adafruit_NeoPixel.h>
 #include <NTPClient.h>
 #include <ESP8266WebServer.h>
-
+#include <WiFiManager.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <Adafruit_NeoPixel.h>
 
 #define RELAY_PIN     16  //D0 (was D2)
 #define BUZZER_PIN    5   //D1
 #define NEOPIXEL_PIN  15  //D8
 #define NUMPIXELS     8   //number of RGB LEDs 
-
-Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 /*
   MFRC 522 NFC card reader
@@ -30,12 +28,9 @@ Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 #define RFID_SS_PIN   2   //D4
 #define RST_PIN       0   //D3 
 
-MFRC522 rfid(RFID_SS_PIN, RST_PIN);  // Create MFRC522 instance
-
-
 #ifndef STASSID
-#define STASSID   "Mark-wifi-2.4G"
-#define STAPSK    "MilkaCsoki22"
+#define STASSID   "************"
+#define STAPSK    "************"
 #endif
 
 const char* ssid = STASSID;
@@ -45,6 +40,11 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 
 ESP8266WebServer server(80);
+
+Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
+
+MFRC522 rfid(RFID_SS_PIN, RST_PIN);  // Create MFRC522 instance
+
 String logBuffer = "";
 
 void log(String message) {
@@ -66,6 +66,18 @@ void setup() {
   
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(RELAY_PIN,OUTPUT);
+
+  //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wm;
+
+  // reset settings - wipe stored credentials for testing
+  //wm.resetSettings(); 
+
+  bool res;
+  res = wm.autoConnect("dormcheckAP","password"); // auto generated AP name from chipid
+  if(!res) {
+    log("Failed to start as AP.");
+  }
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
