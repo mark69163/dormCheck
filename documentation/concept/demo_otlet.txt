@@ -1,0 +1,18 @@
+Demo
+
+Attila – student –436a39f
+Armand -staff-no card (15a1982 lesz)
+Mark-admin-c6a0fd8b
+Unasgined, not in database:  4cc046d5
+
+1.	Deployment, ap, connect to wifi, boot
+2.	Attila card check, all good
+3.	Me card check, all good
+4.	Armand card check 1, not good
+5.	Armand hozzarendelese a kartyahoz
+6.	Armand card check 2, all good
+7.	Unknown card check, not good
+8.	Kartya hozzaad az adatbazishoz
+9.	Vendeg hozzaadasa az adabazishoz
+10.	Uj kartya vendeghez rendelese
+11.	Uj kartya check, all good
