@@ -2,12 +2,12 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <Adafruit_NeoPixel.h>
 #include <NTPClient.h>
 #include <ESP8266WebServer.h>
-#include <WiFiManager.h>
 #include <SPI.h>
 #include <MFRC522.h>
-#include <Adafruit_NeoPixel.h>
+#include <WiFiManager.h>
 
 #define RELAY_PIN     16  //D0 (was D2)
 #define BUZZER_PIN    5   //D1
@@ -61,8 +61,6 @@ void testBuzzer();
 void relayTest();
 
 void setup() {
-  SPI.begin();			// Init SPI bus
-  rfid.PCD_Init();		// Init MFRC522
   
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(RELAY_PIN,OUTPUT);
@@ -79,14 +77,7 @@ void setup() {
     log("Failed to start as AP.");
   }
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
   log("Booting...");
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    delay(5000);
-    ESP.restart();
-  }
 
   ArduinoOTA.setHostname("dormCheck_node_1");
   ArduinoOTA.setPassword("admin");
@@ -102,6 +93,9 @@ void setup() {
   pixels.begin();
   pixels.clear();
   pixels.show();
+
+  SPI.begin();			// Init SPI bus
+  rfid.PCD_Init();		// Init MFRC522
   
   digitalWrite(RELAY_PIN,HIGH);
   digitalWrite(BUZZER_PIN,LOW);
@@ -123,7 +117,14 @@ void loop() {
     for (byte i = 0; i < rfid.uid.size; i++) {
       uid += String(rfid.uid.uidByte[i], HEX);
     }
-    log("UID: " + uid + " | Date: " + dateStamp + " | Time: " + timeStamp);
+
+  int reading = analogRead(A0);
+  // Convert to voltage (ESP8266 ADC reads 0-1V mapped to 0-1024)
+  float voltage = reading * (3.3 / 1024.0); 
+  // Convert to temperature
+  float temperatureC = (voltage - 0.5) * 100.0; 
+
+    log("UID: " + uid + " | Date: " + dateStamp + " | Time: " + timeStamp + " | Temp: " + temperatureC);
     rfid.PICC_HaltA();
   }
   
