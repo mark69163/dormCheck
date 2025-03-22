@@ -5,7 +5,11 @@
 #include "relay.h"
 #include "door_sensor.h"
 #include "nfc_reader.h"
+#include "client_web_server.h"
 
+ESP8266WebServer server(80);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
@@ -24,6 +28,11 @@ void setup(){
   ArduinoOTA.setPassword("admin");
   ArduinoOTA.begin();
 
+  init_web_server();
+  server.begin();
+
+  timeClient.begin();
+
   // pheripheral setup
   init_buzzer();
   init_led();
@@ -38,11 +47,18 @@ void setup(){
 
 void loop(){
   ArduinoOTA.handle();
+  timeClient.update();
+  server.handleClient();
+
+  /*
+  put program logic here
+  */
 
   if(is_card_present()){
     toggle_relay(ACCEPT);
     display_led(ACCEPT);
     play_tune(ACCEPT);
+    web_server_log("UID: " + read_nfc_card() + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
   }
   else{
     toggle_relay(DECLINE);
@@ -50,4 +66,21 @@ void loop(){
     pixels.show();
   }
 
+}
+
+
+// helper functions
+
+String get_date_timestamp(){
+  String formattedDateTime = timeClient.getFormattedDate();
+  int splitT = formattedDateTime.indexOf("T");
+  String dateStamp = formattedDateTime.substring(0, splitT);
+  return dateStamp;
+}
+
+String get_time_timestamp(){
+  String formattedDateTime = timeClient.getFormattedDate();
+  int splitT = formattedDateTime.indexOf("T");
+  String timeStamp = formattedDateTime.substring(splitT + 1, formattedDateTime.length() - 1);
+  return timeStamp;
 }
