@@ -14,6 +14,10 @@ NTPClient timeClient(ntpUDP);
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
+float get_temp();
+String get_date_timestamp();
+String get_time_timestamp();
+
 void setup() {
   //Serial.begin(115200);
 
@@ -52,19 +56,26 @@ void loop() {
   timeClient.update();
   server.handleClient();
 
+  /*
+  put program logic here
+  */
+
   if (is_card_present()) {
     String cardID = read_nfc_card();
-    String requestURL = String(serverRequest) + "?cardid=" + cardID;
 
+    String requestURL = String(serverRequest) + "?cardid=" + cardID;
     int payload = http_get_client(requestURL);
+    String cevent = "UNKNOWNCARD";
 
     if (payload == 1) {
+      cevent = "AUTHORIZED";
       toggle_relay(ACCEPT);
       display_led(ACCEPT);
       play_tune(ACCEPT);
-      web_server_log("UID: " + read_nfc_card() + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
+      web_server_log("UID: " + cardID + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
       delay(3000);
     } else if (payload == 0) {
+      String cevent = "UNAUTHORIZED";
       toggle_relay(DECLINE);
       display_led(DECLINE);
       play_tune(DECLINE);
@@ -72,33 +83,33 @@ void loop() {
     } else {
       web_server_log("Unexpected response from server.");
     }
+
+    String httpRequestData = "api_key=" + String(apiKeyValue) 
+                                        + "&cardid=" + cardID
+                                        + "&userid=" + 1 
+                                        + "&cevent=" + cevent
+                                        + "&check_time=" + get_date_timestamp() + " " + get_time_timestamp() + "";
+    
+    http_post_client(httpRequestData);
   }
 
   toggle_relay(DECLINE);
   display_led(STANDBY);
   pixels.show();
 
-  /*
-  put program logic here
-  */
-
-
-/*
-  if(is_card_present()){
-    toggle_relay(ACCEPT);
-    display_led(ACCEPT);
-    play_tune(ACCEPT);
-    web_server_log("UID: " + read_nfc_card() + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
-  }
-  else{
-    toggle_relay(DECLINE);
-    pixels.clear();
-    pixels.show();
-  }
-*/
 }
 
 // helper functions
+float get_temp(){
+  int reading = analogRead(A0);
+  // Convert to voltage (ESP8266 ADC reads 0-1V mapped to 0-1024)
+  float voltage = reading * (3.3 / 1024.0);
+  // Convert to temperature
+  float temperatureC = (voltage - 0.5) * 100.0;
+
+  return temperatureC;
+}
+
 
 String get_date_timestamp() {
   String formattedDateTime = timeClient.getFormattedDate();

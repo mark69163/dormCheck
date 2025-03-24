@@ -3,7 +3,7 @@
 
 #include "config.h"
 
-void http_post_client(String httpRequestData);
+int  http_post_client(String httpRequestData);
 int  http_get_client(String httpRequestData);
 
 #endif
