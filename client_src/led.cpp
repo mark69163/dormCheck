@@ -1,6 +1,7 @@
 #include "led.h"
 #include "config.h"
 #include "settings.h"
+#include <Arduino.h>
 
 void init_led() {
   pixels.begin();
@@ -27,6 +28,13 @@ void display_led(States pattern) {
     break;
 
     case PROCESSING:
+
+      for (int i = 0; i <= NUMPIXELS; i++) {
+        pixels.setPixelColor(i, pixels.Color(0, 0, 5));  
+        pixels.show();
+        delay(100);
+      }
+      /*
       if (currentMillis - previousMillis >= interval) {
         previousMillis = currentMillis;
 
@@ -39,6 +47,7 @@ void display_led(States pattern) {
           pixels.clear();  // Clear all LEDs before updating
         }
       }
+      */
       break;
 
     case ACCEPT:
@@ -54,6 +63,13 @@ void display_led(States pattern) {
         pixels.show();
       break;
     case TEST:
+      break;
+
+      default:
+        for (int i = 0; i < NUMPIXELS; i++) {
+          pixels.setPixelColor(i, pixels.Color(5, 0, 0));  
+        }
+        pixels.show();
       break;
   }
 }

@@ -14,9 +14,13 @@ NTPClient timeClient(ntpUDP);
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
+States state = STANDBY;
+String cardID = "";
+
 float get_temp();
 String get_date_timestamp();
 String get_time_timestamp();
+void handle_evenet();
 
 void setup() {
   //Serial.begin(115200);
@@ -52,55 +56,92 @@ void setup() {
 }
 
 void loop() {
-  ArduinoOTA.handle();
-  timeClient.update();
-  server.handleClient();
+  String requestURL = "";
+  int payload = 0;
 
-  /*
-  put program logic here
-  */
+  switch (state) {
+    case STANDBY:
+      ArduinoOTA.handle();
+      timeClient.update();
+      server.handleClient();
 
-  if (is_card_present()) {
-    String cardID = read_nfc_card();
+      toggle_relay(state);
+      display_led(state);
+      pixels.show();
+      mute_buzzer(true);
 
-    String requestURL = String(serverRequest) + "?cardid=" + cardID;
-    int payload = http_get_client(requestURL);
-    String cevent = "UNKNOWNCARD";
+      if (is_card_present()) {
+        state = PROCESSING;
+      }
+      break;
 
-    if (payload == 1) {
-      cevent = "AUTHORIZED";
-      toggle_relay(ACCEPT);
-      display_led(ACCEPT);
-      play_tune(ACCEPT);
-      web_server_log("UID: " + cardID + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
-      delay(3000);
-    } else if (payload == 0) {
-      String cevent = "UNAUTHORIZED";
-      toggle_relay(DECLINE);
-      display_led(DECLINE);
-      play_tune(DECLINE);
-      web_server_log("Unauthorized attempt.");
-    } else {
-      web_server_log("Unexpected response from server.");
-    }
+    case PROCESSING:
+      cardID = read_nfc_card();
+      mute_buzzer(false);
+      display_led(state);
 
-    String httpRequestData = "api_key=" + String(apiKeyValue) 
-                                        + "&cardid=" + cardID
-                                        + "&userid=" + 1 
-                                        + "&cevent=" + cevent
-                                        + "&check_time=" + get_date_timestamp() + " " + get_time_timestamp() + "";
-    
-    http_post_client(httpRequestData);
-  }
+      requestURL = String(serverRequest) + "?cardid=" + cardID;
+      payload = http_get_client(requestURL);
 
-  toggle_relay(DECLINE);
-  display_led(STANDBY);
-  pixels.show();
+      if (payload == 1) {
+        state = ACCEPT;
+      } else if (payload == 0) {
+        state = DECLINE;
+      } else {
+        web_server_log("Unexpected response from server.");
+        //state = STANDBY;
+        state = UNRECOGNIZED;
+        //state = ACCEPT;
+      }
+      break;
 
+    default:
+      handle_evenet();
+      state = STANDBY;
+      break;
+  };
 }
 
+
 // helper functions
-float get_temp(){
+
+void handle_evenet() {
+  String cevent = "";
+
+  switch (state) {
+    case ACCEPT:
+      cevent = "AUTHORIZED";
+      break;
+
+    case DECLINE:
+      cevent = "UNAUTHORIZED";
+      break;
+
+    case UNRECOGNIZED:
+      cevent = "UNRECOGNIZED";
+      break;
+
+    default:
+      break;
+  };
+
+  toggle_relay(state);
+  display_led(state);
+  play_tune(state);
+
+  String httpRequestData = "api_key=" + String(apiKeyValue)
+                           + "&cardid=" + cardID
+                           + "&userid=" + 1
+                           + "&cevent=" + cevent
+                           + "&check_time=" + get_date_timestamp() + " " + get_time_timestamp() + "";
+
+  http_post_client(httpRequestData);
+
+  web_server_log("UID: " + cardID + " | Event: " + cevent + " |  Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
+}
+
+
+float get_temp() {
   int reading = analogRead(A0);
   // Convert to voltage (ESP8266 ADC reads 0-1V mapped to 0-1024)
   float voltage = reading * (3.3 / 1024.0);

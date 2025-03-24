@@ -55,7 +55,10 @@ typedef enum {
     PROCESSING,
     ACCEPT,
     DECLINE,
+    UNRECOGNIZED,
     TEST
 } States;
+
+extern States state;
 
 #endif

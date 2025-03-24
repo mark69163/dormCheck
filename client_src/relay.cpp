@@ -23,9 +23,9 @@ void toggle_relay(States state) {
         case TEST:
             relayState = !relayState;  // Toggle for TEST
             break;
-        case DECLINE:
+        default:
             relayState = true;  // Relay OFF for DECLINE
-            break;
+        break;
     }
 
     digitalWrite(RELAY_PIN, relayState ? HIGH : LOW);  // Set the relay state
