@@ -27,6 +27,7 @@ void play_tune(States tune) {
       tone(BUZZER_PIN, 500, 500);
       delay(500);
       tone(BUZZER_PIN, 500, 500);
+      delay(500);
       break;
     case TEST:
       break;

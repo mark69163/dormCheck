@@ -13,15 +13,15 @@ NTPClient timeClient(ntpUDP);
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
-void setup(){
+void setup() {
   //Serial.begin(115200);
 
   //wifi manager setup
   WiFiManager wm;
   //wm.resetSettings(); //forgets previously connected network
   if (!wm.autoConnect("dormcheckAP", "password")) {
-        //Serial.println("Failed to start as AP.");
-    }
+    //Serial.println("Failed to start as AP.");
+  }
 
   //OTA upadte setup
   ArduinoOTA.setHostname("dormCheck_node_1");
@@ -43,17 +43,63 @@ void setup(){
   //mute_buzzer(true);
   //disable_led(true);
   //disable_relay(true);
+  display_led(STANDBY);
 }
 
-void loop(){
+void loop() {
   ArduinoOTA.handle();
   timeClient.update();
   server.handleClient();
+
+
+  if (is_card_present()) {
+    String cardID = read_nfc_card();
+
+    WiFiClient client;
+    HTTPClient http;
+    // Specify content-type header
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    String requestURL = String(serverRequest) + "?cardid=" + cardID;
+
+    http.begin(client, requestURL);
+    int httpCode = http.GET();
+    //log("httpRequestData: " + requestURL)
+
+    // If a response was received
+    if (httpCode > 0) {
+      //OK
+      if (httpCode == 200) {
+        String payload = http.getString();  // Read response
+        http.end();
+        if (payload == "1") {
+          toggle_relay(ACCEPT);
+          display_led(ACCEPT);
+          play_tune(ACCEPT);
+          web_server_log("UID: " + read_nfc_card() + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
+          delay(3000);
+        } else if (payload == "0") {
+          toggle_relay(DECLINE);
+          display_led(DECLINE);
+          play_tune(DECLINE);
+          web_server_log("Unauthorized attempt.");
+        } else {
+          web_server_log("Unexpected response from server.");
+        }
+      }
+    } else {
+      web_server_log("Failed to connect to server!");
+    }
+    toggle_relay(DECLINE);
+    display_led(STANDBY);
+    pixels.show();
+  }
 
   /*
   put program logic here
   */
 
+
+  /*
   if(is_card_present()){
     toggle_relay(ACCEPT);
     display_led(ACCEPT);
@@ -65,20 +111,20 @@ void loop(){
     pixels.clear();
     pixels.show();
   }
-
+*/
 }
 
 
 // helper functions
 
-String get_date_timestamp(){
+String get_date_timestamp() {
   String formattedDateTime = timeClient.getFormattedDate();
   int splitT = formattedDateTime.indexOf("T");
   String dateStamp = formattedDateTime.substring(0, splitT);
   return dateStamp;
 }
 
-String get_time_timestamp(){
+String get_time_timestamp() {
   String formattedDateTime = timeClient.getFormattedDate();
   int splitT = formattedDateTime.indexOf("T");
   String timeStamp = formattedDateTime.substring(splitT + 1, formattedDateTime.length() - 1);
