@@ -6,6 +6,7 @@
 #include "door_sensor.h"
 #include "nfc_reader.h"
 #include "client_web_server.h"
+#include "server_request.h"
 
 ESP8266WebServer server(80);
 WiFiUDP ntpUDP;
@@ -51,55 +52,38 @@ void loop() {
   timeClient.update();
   server.handleClient();
 
-
   if (is_card_present()) {
     String cardID = read_nfc_card();
-
-    WiFiClient client;
-    HTTPClient http;
-    // Specify content-type header
-    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     String requestURL = String(serverRequest) + "?cardid=" + cardID;
 
-    http.begin(client, requestURL);
-    int httpCode = http.GET();
-    //log("httpRequestData: " + requestURL)
+    int payload = http_get_client(requestURL);
 
-    // If a response was received
-    if (httpCode > 0) {
-      //OK
-      if (httpCode == 200) {
-        String payload = http.getString();  // Read response
-        http.end();
-        if (payload == "1") {
-          toggle_relay(ACCEPT);
-          display_led(ACCEPT);
-          play_tune(ACCEPT);
-          web_server_log("UID: " + read_nfc_card() + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
-          delay(3000);
-        } else if (payload == "0") {
-          toggle_relay(DECLINE);
-          display_led(DECLINE);
-          play_tune(DECLINE);
-          web_server_log("Unauthorized attempt.");
-        } else {
-          web_server_log("Unexpected response from server.");
-        }
-      }
+    if (payload == 1) {
+      toggle_relay(ACCEPT);
+      display_led(ACCEPT);
+      play_tune(ACCEPT);
+      web_server_log("UID: " + read_nfc_card() + " | Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
+      delay(3000);
+    } else if (payload == 0) {
+      toggle_relay(DECLINE);
+      display_led(DECLINE);
+      play_tune(DECLINE);
+      web_server_log("Unauthorized attempt.");
     } else {
-      web_server_log("Failed to connect to server!");
+      web_server_log("Unexpected response from server.");
     }
-    toggle_relay(DECLINE);
-    display_led(STANDBY);
-    pixels.show();
   }
+
+  toggle_relay(DECLINE);
+  display_led(STANDBY);
+  pixels.show();
 
   /*
   put program logic here
   */
 
 
-  /*
+/*
   if(is_card_present()){
     toggle_relay(ACCEPT);
     display_led(ACCEPT);
@@ -113,7 +97,6 @@ void loop() {
   }
 */
 }
-
 
 // helper functions
 
