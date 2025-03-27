@@ -38,6 +38,7 @@ CREATE TABLE `ACCESSCARD` (
 INSERT INTO `ACCESSCARD` (`cardid`) VALUES
 ('15a1982'),
 ('436a39f'),
+('UNKNOWN'),
 ('c6a0fd8b');
 
 -- --------------------------------------------------------

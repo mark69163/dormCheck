@@ -10,7 +10,7 @@
 
 ESP8266WebServer server(80);
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP);
+NTPClient timeClient(ntpUDP,3600);
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
@@ -49,10 +49,12 @@ void setup() {
   init_door_sensor();
   init_nfc_reader();
 
-  //mute_buzzer(true);
-  //disable_led(true);
+  mute_buzzer(true);
+  disable_led(true);
   //disable_relay(true);
   display_led(STANDBY);
+  web_server_log("Dormcheck Clinet Node Successfully Booted.");
+
 }
 
 void loop() {
@@ -64,11 +66,7 @@ void loop() {
       ArduinoOTA.handle();
       timeClient.update();
       server.handleClient();
-
-      toggle_relay(state);
-      display_led(state);
-      pixels.show();
-      mute_buzzer(true);
+      disable_led(false);
 
       if (is_card_present()) {
         state = PROCESSING;
@@ -78,7 +76,7 @@ void loop() {
     case PROCESSING:
       cardID = read_nfc_card();
       mute_buzzer(false);
-      display_led(state);
+      //display_led(state);
 
       requestURL = String(serverRequest) + "?cardid=" + cardID;
       payload = http_get_client(requestURL);
@@ -89,8 +87,9 @@ void loop() {
         state = DECLINE;
       } else {
         web_server_log("Unexpected response from server.");
+        state=DECLINE;
         //state = STANDBY;
-        state = UNRECOGNIZED;
+        //state = UNRECOGNIZED;
         //state = ACCEPT;
       }
       break;
@@ -100,6 +99,11 @@ void loop() {
       state = STANDBY;
       break;
   };
+
+  toggle_relay(state);
+  display_led(state);
+  play_tune(state);
+  mute_buzzer(true);
 }
 
 
@@ -115,19 +119,13 @@ void handle_evenet() {
 
     case DECLINE:
       cevent = "UNAUTHORIZED";
-      break;
-
-    case UNRECOGNIZED:
-      cevent = "UNRECOGNIZED";
+      cardID = "UNKNOWN";
       break;
 
     default:
       break;
   };
 
-  toggle_relay(state);
-  display_led(state);
-  play_tune(state);
 
   String httpRequestData = "api_key=" + String(apiKeyValue)
                            + "&cardid=" + cardID
