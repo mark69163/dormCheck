@@ -50,9 +50,6 @@ void setup() {
   init_door_sensor();
   init_nfc_reader();
 
-  mute_buzzer(true);
-  disable_led(true);
-  //disable_relay(true);
   display_led(STANDBY);
   web_server_log("Dormcheck Clinet Node Successfully Booted.");
 
@@ -67,7 +64,6 @@ void loop() {
       ArduinoOTA.handle();
       timeClient.update();
       server.handleClient();
-      disable_led(false);
 
       if (is_card_present()) {
         state = PROCESSING;
@@ -76,8 +72,6 @@ void loop() {
 
     case PROCESSING:
       cardID = read_nfc_card();
-      mute_buzzer(false);
-      //display_led(state);
 
       requestURL = String(serverRequest) + "?cardid=" + cardID;
       authorizationResponse = http_get_client(requestURL);
@@ -104,7 +98,6 @@ void loop() {
   toggle_relay(state);
   display_led(state);
   play_tune(state);
-  mute_buzzer(true);
 }
 
 

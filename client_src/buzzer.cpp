@@ -24,14 +24,17 @@ void play_tune(States tune) {
       delay(200);                   // Slightly longer pause to end it
       break;
 
+    case DECLINE:
+      tone(BUZZER_PIN, 500, 500);
+      delay(500);
+      tone(BUZZER_PIN, 500, 500);
+      delay(500);
+      break;
+
     case TEST:
       break;
 
     default:
-      tone(BUZZER_PIN, 500, 500);
-      delay(500);
-      tone(BUZZER_PIN, 500, 500);
-      delay(500);
     break;
   }
 }
