@@ -59,7 +59,7 @@ void setup() {
 
 void loop() {
   String requestURL = "";
-  int payload = 0;
+  int authorizationResponse = 0;
 
   switch (state) {
     case STANDBY:
@@ -79,18 +79,15 @@ void loop() {
       //display_led(state);
 
       requestURL = String(serverRequest) + "?cardid=" + cardID;
-      payload = http_get_client(requestURL);
+      authorizationResponse = http_get_client(requestURL);
 
-      if (payload == 1) {
+      if (authorizationResponse == 1) {
         state = ACCEPT;
-      } else if (payload == 0) {
+      } else if (authorizationResponse == 0) {
         state = DECLINE;
       } else {
         web_server_log("Unexpected response from server.");
         state=DECLINE;
-        //state = STANDBY;
-        //state = UNRECOGNIZED;
-        //state = ACCEPT;
       }
       break;
 
@@ -119,14 +116,14 @@ void handle_evenet() {
 
     case DECLINE:
       cevent = "UNAUTHORIZED";
-      cardID = "UNKNOWN";
+      //cardID = "UNKNOWN";
       break;
 
     default:
       break;
   };
 
-
+/*
   String httpRequestData = "api_key=" + String(apiKeyValue)
                            + "&cardid=" + cardID
                            + "&userid=" + 1
@@ -134,7 +131,7 @@ void handle_evenet() {
                            + "&check_time=" + get_date_timestamp() + " " + get_time_timestamp() + "";
 
   http_post_client(httpRequestData);
-
+*/
   web_server_log("UID: " + cardID + " | Event: " + cevent + " |  Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
 }
 
