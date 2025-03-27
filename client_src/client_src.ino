@@ -16,6 +16,7 @@ MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
 States state = STANDBY;
 String cardID = "";
+String cevent = "";
 
 float get_temp();
 String get_date_timestamp();
@@ -82,8 +83,10 @@ void loop() {
       authorizationResponse = http_get_client(requestURL);
 
       if (authorizationResponse == 1) {
+        cevent = "AUTHORIZED";
         state = ACCEPT;
       } else if (authorizationResponse == 0) {
+        cevent = "UNAUTHORIZED";
         state = DECLINE;
       } else {
         web_server_log("Unexpected response from server.");
@@ -91,8 +94,9 @@ void loop() {
       }
       break;
 
+    // ACCEPT, DECLINE
     default:
-      handle_evenet();
+      web_server_log("UID: " + cardID + " | Event: " + cevent + " |  Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
       state = STANDBY;
       break;
   };
@@ -105,36 +109,6 @@ void loop() {
 
 
 // helper functions
-
-void handle_evenet() {
-  String cevent = "";
-
-  switch (state) {
-    case ACCEPT:
-      cevent = "AUTHORIZED";
-      break;
-
-    case DECLINE:
-      cevent = "UNAUTHORIZED";
-      //cardID = "UNKNOWN";
-      break;
-
-    default:
-      break;
-  };
-
-/*
-  String httpRequestData = "api_key=" + String(apiKeyValue)
-                           + "&cardid=" + cardID
-                           + "&userid=" + 1
-                           + "&cevent=" + cevent
-                           + "&check_time=" + get_date_timestamp() + " " + get_time_timestamp() + "";
-
-  http_post_client(httpRequestData);
-*/
-  web_server_log("UID: " + cardID + " | Event: " + cevent + " |  Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
-}
-
 
 float get_temp() {
   int reading = analogRead(A0);

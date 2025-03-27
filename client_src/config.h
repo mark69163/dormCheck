@@ -37,7 +37,6 @@
 	
 // Network & API
 #define apiKeyValue     "tPmAT5Ab3j7F9"
-#define serverName      "http://192.168.20.1/dormcheck-post-data.php"
 #define serverRequest   "http://192.168.20.1/dormcheck-get-data.php"
 
 extern ESP8266WebServer server;
