@@ -10,7 +10,7 @@
 
 ESP8266WebServer server(80);
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP,3600);
+NTPClient timeClient(ntpUDP, 3600);
 Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 MFRC522 rfid(RFID_SS_PIN, RST_PIN);
 
@@ -71,7 +71,7 @@ void loop() {
 
     case PROCESSING:
       cardID = read_nfc_card();
-  
+
       requestURL = String(serverRequest) + "?cardid=" + cardID;
       authorizationResponse = http_get_client(requestURL);
 
@@ -83,7 +83,19 @@ void loop() {
         state = DECLINE;
       } else {
         web_server_log("Unexpected response from server.");
-        state=DECLINE;
+        state = DECLINE;
+      }
+      
+      display_led(state);
+      play_tune(state);
+
+      break;
+
+    case ACCEPT:
+      //mute_buzzer(true);
+      if (read_door_sensor()) {
+        web_server_log("UID: " + cardID + " | Event: " + cevent + " |  Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
+        state = STANDBY;
       }
       break;
 
@@ -96,7 +108,7 @@ void loop() {
 
   toggle_relay(state);
   display_led(state);
-  play_tune(state);
+
 }
 
 

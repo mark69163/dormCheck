@@ -34,6 +34,7 @@
 #define RST_PIN 		    0	  //D3
 
 #define NUMPIXELS 		  8	  //number of RGB LEDs
+#define DOOR_TIMEOUT    5000 // 5s
 	
 // Network & API
 #define apiKeyValue     "tPmAT5Ab3j7F9"

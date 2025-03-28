@@ -6,9 +6,9 @@ void init_door_sensor(){
 }
 
 bool read_door_sensor() {
-    static int sensorState = HIGH;           
+    static int sensorState;           
     static int lastSensorState = HIGH;  
-    static const unsigned long debounceTime = 50;
+    const unsigned long debounceTime = 50;
     static unsigned long lastDebounceTime = 0;
 
     int reading = digitalRead(DOOR_SENS_PIN);  // Read current state of the sensor
@@ -20,7 +20,7 @@ bool read_door_sensor() {
     if ((millis() - lastDebounceTime) > debounceTime) {  
         if (reading != sensorState) {  
             sensorState = reading;
-            return true;  
+            if(sensorState==0) return true;  
         }
     }
 
