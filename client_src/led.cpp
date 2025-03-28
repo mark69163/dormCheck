@@ -28,7 +28,8 @@ void display_led(States pattern) {
     break;
 
     case PROCESSING:
-
+      pixels.clear();
+      pixels.show();
       for (int i = 0; i <= NUMPIXELS; i++) {
         pixels.setPixelColor(i, pixels.Color(0, 0, 5));  
         pixels.show();

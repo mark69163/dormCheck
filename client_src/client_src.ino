@@ -51,8 +51,7 @@ void setup() {
   init_nfc_reader();
 
   display_led(STANDBY);
-  web_server_log("Dormcheck Clinet Node Successfully Booted.");
-
+  //web_server_log("Dormcheck Clinet Node Successfully Booted.");
 }
 
 void loop() {
@@ -72,7 +71,7 @@ void loop() {
 
     case PROCESSING:
       cardID = read_nfc_card();
-
+  
       requestURL = String(serverRequest) + "?cardid=" + cardID;
       authorizationResponse = http_get_client(requestURL);
 

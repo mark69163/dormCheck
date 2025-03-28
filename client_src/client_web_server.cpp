@@ -3,20 +3,6 @@
 
 String logBuffer = "";
 
-/*
-void init_web_server() {
-    server.on("/logs", handle_logs);
-}
-
-void web_server_log(String message) {
-    logBuffer += message + "\n";
-}
-
-void handle_logs() {
-    server.send(200, "text/plain", logBuffer);
-}
-*/
-
 const char html_page[] PROGMEM = R"rawliteral(
 <html>
   <head>
@@ -205,7 +191,7 @@ const char html_page[] PROGMEM = R"rawliteral(
       <div class="content">
         <div id="logTab" class="tab-content active">
           <h2>Cardcheck Logs</h2>
-          <p>Logs will be displayed here</p>
+          <pre id="logContent">Loading logs...</pre>
         </div>
 
         <div id="settingsTab" class="tab-content">
@@ -284,6 +270,18 @@ const char html_page[] PROGMEM = R"rawliteral(
         document.getElementById(tab).classList.add('active');
       }
 
+      function loadLogs() {
+        fetch('/logs')
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById('logContent').textContent = data;
+          })
+          .catch(error => {
+            document.getElementById('logContent').textContent = 'Error loading logs!';
+            console.error('Error fetching logs:', error);
+          });
+      }
+
       // Simulate login and show main content
       document.querySelector("form[action='/login']").onsubmit = function(e) {
         e.preventDefault();
@@ -296,30 +294,29 @@ const char html_page[] PROGMEM = R"rawliteral(
         var toggle = document.getElementById(state + "Toggle");
         // No need to update state text, sliders will indicate the state
       }
+      loadLogs(); // Load logs when the page is opened
+      setInterval(loadLogs, 5000); // Refresh logs every 5 second
+
     </script>
   </body>
 </html>
 )rawliteral";
 
+// Initialize web server
 void init_web_server() {
-    // Serve the root page (HTML content)
-    server.on("/", HTTP_GET, handleRoot);
-    server.on("/update", HTTP_POST, handleWiFiUpdate);
-    server.on("/logs", handle_logs);
-
-    // Add any additional routes or tabs (Cardcheck Logs, Diagnostics)
-    server.on("/diagnostics", HTTP_GET, serveSelfDiagnostics);
-    
-    server.begin();
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/update", HTTP_POST, handleWiFiUpdate);
+  server.on("/logs", HTTP_GET, handle_logs);
+  server.on("/diagnostics", HTTP_GET, serveSelfDiagnostics);
+  server.begin();
 }
 
 void handle_logs() {
-    server.send(200, "text/plain", logBuffer);
+  server.send(200, "text/plain", logBuffer);
 }
 
 void web_server_log(String message) {
-    logBuffer += message + "\n";
-    handle_logs();
+  logBuffer += message + "\n";
 }
 
 void handleRoot() {
@@ -329,20 +326,10 @@ void handleRoot() {
 void handleWiFiUpdate() {
   String ssid = server.arg("ssid");
   String password = server.arg("wpassword");
-
-  // Perform necessary actions to update Wi-Fi credentials
-  // For example: WiFi.begin(ssid, password);
-  
   server.send(200, "text/html", "<h1>Device Updated!</h1>");
 }
 
 void serveSelfDiagnostics() {
-  // Here, you can provide device information such as uptime, temperature, etc.
-  String diagnostics = "Uptime: 5 hours\nTemperature: 25 *C\nMAC Address: 00:1A:2B:3C:4D:5E";
+  String diagnostics = "Uptime: 5 hours\nTemperature: 25°C\nMAC Address: 00:1A:2B:3C:4D:5E\nFirmware Version: 1.0.0\nOperation Cycles: 256";
   server.send(200, "text/plain", diagnostics);
-}
-
-void serveSettings() {
-  // Implement the settings page for Wi-Fi credentials or other settings
-  // You can render HTML forms and handle the POST request here
 }
