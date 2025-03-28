@@ -18,6 +18,8 @@ States state = STANDBY;
 String cardID = "";
 String cevent = "";
 
+unsigned long actualTimeout = 0;
+
 float get_temp();
 String get_date_timestamp();
 String get_time_timestamp();
@@ -77,6 +79,7 @@ void loop() {
 
       if (authorizationResponse == 1) {
         cevent = "AUTHORIZED";
+        actualTimeout = millis();
         state = ACCEPT;
       } else if (authorizationResponse == 0) {
         cevent = "UNAUTHORIZED";
@@ -85,7 +88,7 @@ void loop() {
         web_server_log("Unexpected response from server.");
         state = DECLINE;
       }
-      
+
       display_led(state);
       play_tune(state);
 
@@ -93,7 +96,7 @@ void loop() {
 
     case ACCEPT:
       //mute_buzzer(true);
-      if (read_door_sensor()) {
+      if (read_door_sensor() || (millis()-actualTimeout>DOOR_TIMEOUT)) {
         web_server_log("UID: " + cardID + " | Event: " + cevent + " |  Date: " + get_date_timestamp() + " | Time: " + get_time_timestamp());
         state = STANDBY;
       }
