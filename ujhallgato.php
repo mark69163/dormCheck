@@ -12,9 +12,9 @@
 <div class="navbar">
     <img src="img/dormlogo.png" alt="Logo">
     <ul>
-        <li><a href="index.html">Főoldal</a></li>
-        <li><a href="ujhallgato.html"><b>Új hallgató</b></a></li>
-        <li><a href="vendegkartya.html">Vendégkártya felvétele</a></li>
+        <li><a href="index.php">📊 Főoldal</a></li>
+        <li><a href="ujhallgato.php"><b>➕ Új hallgató</b></a></li>
+        <li><a href="vendegkartya.php">🪪 Vendégkártya felvétele</a></li>
     </ul>
 </div>
 
@@ -35,8 +35,21 @@
     </form>
 </div>
 
-<footer>
-    <p>&copy; 2025 Kollégiumi Beléptető Rendszer</p>
+<br><br><br><br><br>
+<footer class="footer">
+    <div class="footer-left">
+        <img src="img/logo--inverse.png" alt="NJE logó"> <!-- Itt cseréld le a megfelelő logóra -->
+        <h2>Kollégium Beléptető Rendszer</h2>
+        <a href="#">Tagok</a>
+        <div class="footer-links">
+            <a href="#">Koltai Armand</a> |
+            <a href="#">Hoki Attila</a> |
+            <a href="#">Kovács Márk</a>
+        </div>
+    </div>
+    <div class="footer-right">
+        <img src="img/dormlogo.png" alt="Széchenyi 2020"> <!-- Itt cseréld le a megfelelő logóra -->
+    </div>
 </footer>
 
 </body>
