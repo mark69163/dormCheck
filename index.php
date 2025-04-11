@@ -308,10 +308,10 @@
             <li onclick="location.href='index.php'">
                 <i data-lucide="bar-chart-3"></i> <span>Home</span>
             </li>
-            <li onclick="location.href='newstudent.php'">
+            <li onclick="location.href='ujhallgato.php'">
                 <i data-lucide="user-plus"></i> <span>New Student</span>
             </li>
-            <li onclick="location.href='guestcard.php'">
+            <li onclick="location.href='vendegkartya.php'">
                 <i data-lucide="badge-check"></i> <span>Register Guest Card</span>
             </li>
         </ul>
