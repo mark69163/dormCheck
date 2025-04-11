@@ -374,6 +374,22 @@
 
 <!-- Scripts -->
 <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.getElementById("sidebar");
+        const btnDiv = document.getElementById("toggleBtnDiv");
+
+        // Read sidebar state from localStorage
+        const isCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+
+        if (isCollapsed) {
+            sidebar.classList.add("collapsed");
+            btnDiv.style.left = "60px";
+        } else {
+            sidebar.classList.remove("collapsed");
+            btnDiv.style.left = "250px";
+        }
+    });
+
     function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
         const btnDiv = document.getElementById("toggleBtnDiv");
@@ -381,11 +397,10 @@
         sidebar.classList.toggle("collapsed");
 
         // Adjust the toggle button position dynamically
-        if (sidebar.classList.contains("collapsed")) {
-            btnDiv.style.left = "60px";
-        } else {
-            btnDiv.style.left = "250px";
-        }
+        btnDiv.style.left = sidebar.classList.contains("collapsed") ? "60px" : "250px";
+
+        // Save state to localStorage
+        localStorage.setItem("sidebarCollapsed", sidebar.classList.contains("collapsed"));
     }
 
     function toggleNotifications() {
