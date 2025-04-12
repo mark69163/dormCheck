@@ -23,13 +23,13 @@ CREATE TABLE `USER`(
     userid INT AUTO_INCREMENT PRIMARY KEY, 
     firstname VARCHAR(25) NOT NULL,
     lastname VARCHAR(25) NOT NULL,
-    email VARCHAR(50)  NULL,
+    email VARCHAR(50) NOT NULL,
     phone VARCHAR(25) NULL DEFAULT "unknown",
-    gender ENUM('male', 'female') NULL,
-    hashed_psw VARCHAR(255) NULL,
-    img_path VARCHAR(255) NULL DEFAULT "unknown.jpg",
-    user_role ENUM('student', 'staff', 'administrator', 'unverified') NOT NULL DEFAULT 'student',
-    dob DATE NULL,
+    gender ENUM('male', 'female') NOT NULL,
+    hashed_psw VARCHAR(255) NOT NULL,
+    img_path VARCHAR(255) NOT NULL DEFAULT "unknown.jpg",
+    user_role ENUM('student', 'staff', 'administrator') NOT NULL DEFAULT 'student',
+    dob DATE NOT NULL,
     neptun_id VARCHAR(15) NULL,
     enroll_year VARCHAR(25) NULL
 );
@@ -95,9 +95,9 @@ CREATE TABLE SUBSCRIPTIONS (
 
 CREATE TABLE CARDCHECKS(
     cardid VARCHAR(255) NOT NULL,
-    userid INT NULL,
+    userid INT NOT NULL,
     cevent VARCHAR(50) NOT NULL,
-    check_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    check_time DATETIME NOT NULL,
     PRIMARY KEY(cardid, userid, check_time),
     FOREIGN KEY (cardid) REFERENCES ACCESSCARD(cardid) ON DELETE CASCADE,
     FOREIGN KEY (userid) REFERENCES `USER`(userid) ON DELETE CASCADE
@@ -137,13 +137,3 @@ CREATE TABLE GEO_INFO(
     geo_info VARCHAR(255) NULL DEFAULT "unknown",
     PRIMARY KEY (ip_address)
 );
-
-CREATE TABLE INVALID_CHECKS(
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
-    cardnumber VARCHAR(50) NOT NULL,
-    cevent ENUM("UNASSIGNED, UNKNOWN CARD"),
-    check_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO ACCESSCARD VALUES ("UNKNOWN");
-INSERT INTO `USER`(userid, firstname, lastname, user_role) VALUES (-1, "UNKNOWN", "USER", "unverified");
