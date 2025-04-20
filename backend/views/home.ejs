@@ -51,7 +51,10 @@
         .card-msg img {
             width: 50px;
             height: 50px;
+            object-fit: cover;
             margin-right: 15px;
+            border-radius: 5px;
+            cursor: zoom-in;
         }
 
         .card-msg .text-content {
@@ -120,6 +123,26 @@
             margin-right: 10px;
             text-decoration: none;
         }
+
+        #lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #lightbox img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -155,6 +178,11 @@
     </div>
 </footer>
 
+<!-- Lightbox -->
+<div id="lightbox">
+    <img id="lightbox-img" src="">
+</div>
+
 <script>
     const ws = new WebSocket("ws://localhost:3333");
 
@@ -163,7 +191,6 @@
         const div = document.createElement("div");
         div.className = "card-msg";
 
-        // Várt formátum: név - státusz - idő - kép
         const parts = data.split(" - ");
         let name = "Ismeretlen";
         let status = "";
@@ -183,7 +210,6 @@
         const isError = status.includes("Ismeretlen") || status.includes("Tulajdonos nélküli");
         const avatar = isError ? "/public/img/error.png" : `/public/img/${image}`;
 
-        // Dátumformázás
         let displayTime;
         try {
             const d = new Date(timestamp);
@@ -203,10 +229,10 @@
         const timeHTML = `<div class="time" style="${isError ? 'color: red; font-weight: bold;' : ''}">${displayTime}</div>`;
 
         div.innerHTML = `
-            <a href="${avatar}" target="_blank">
-            <img src="${avatar}" alt="Avatar" style="object-fit: cover; width: 50px; height: 50px; border-radius: 5px;">
-            </a>
-            <div class="text-content">
+            ${isError
+            ? `<img src="${avatar}" alt="Avatar">`
+            : `<img src="${avatar}" alt="Avatar" onclick="openLightbox('${avatar}')">`
+             }            <div class="text-content">
                 <div class="name-status">
                     <div class="name">${name}</div>
                     ${statusHTML}
@@ -217,9 +243,19 @@
 
         document.getElementById("messages").prepend(div);
     };
+
+    // Lightbox működés
+    function openLightbox(src) {
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        lightboxImg.src = src;
+        lightbox.style.display = 'flex';
+    }
+
+    document.getElementById('lightbox').addEventListener('click', () => {
+        document.getElementById('lightbox').style.display = 'none';
+    });
 </script>
-
-
 
 </body>
 </html>
