@@ -163,31 +163,29 @@
         const div = document.createElement("div");
         div.className = "card-msg";
 
-        // Szétválasztjuk az utolsó kötőjel mentén
-        const lastDashIndex = data.lastIndexOf(" - ");
-        let message = data;
-        let timestamp = "";
-
-        if (lastDashIndex !== -1) {
-            message = data.substring(0, lastDashIndex);
-            timestamp = data.substring(lastDashIndex + 3);
-        }
-
+        // Várt formátum: név - státusz - idő - kép
+        const parts = data.split(" - ");
         let name = "Ismeretlen";
-        let status = message;
+        let status = "";
+        let timestamp = "";
+        let image = "hallgato.png";
 
-        if (message.includes(" - ")) {
-            const [n, s] = message.split(" - ");
-            name = n;
-            status = s;
+        if (parts.length === 4) {
+            name = parts[0];
+            status = parts[1];
+            timestamp = parts[2];
+            image = parts[3];
+        } else {
+            status = parts[0];
+            timestamp = parts[1];
         }
 
         const isError = status.includes("Ismeretlen") || status.includes("Tulajdonos nélküli");
-        const avatar = isError ? "/public/img/error.png" : "/public/img/hallgato.png";
+        const avatar = isError ? "/public/img/error.png" : `/public/img/${image}`;
 
-        // Magyarosított, jól olvasható idő
+        // Dátumformázás
         let displayTime;
-        if (timestamp) {
+        try {
             const d = new Date(timestamp);
             displayTime = d.toLocaleString("hu-HU", {
                 year: 'numeric',
@@ -197,23 +195,17 @@
                 minute: '2-digit',
                 second: '2-digit'
             }).replace(',', '');
-        } else {
-            const now = new Date();
-            displayTime = now.toLocaleString("hu-HU", {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            }).replace(',', '');
+        } catch {
+            displayTime = "Ismeretlen idő";
         }
 
         const statusHTML = `<div class="status" style="${isError ? 'color: red;' : ''}">${status}</div>`;
         const timeHTML = `<div class="time" style="${isError ? 'color: red; font-weight: bold;' : ''}">${displayTime}</div>`;
 
         div.innerHTML = `
-            <img src="${avatar}" alt="Avatar">
+            <a href="${avatar}" target="_blank">
+            <img src="${avatar}" alt="Avatar" style="object-fit: cover; width: 50px; height: 50px; border-radius: 5px;">
+            </a>
             <div class="text-content">
                 <div class="name-status">
                     <div class="name">${name}</div>
@@ -226,6 +218,8 @@
         document.getElementById("messages").prepend(div);
     };
 </script>
+
+
 
 </body>
 </html>

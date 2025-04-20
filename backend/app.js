@@ -5,7 +5,6 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const db = require("./config/db");
 
-const EntryController = require("./controllers/entryController");
 const HomeController = require("./controllers/homeController"); // Új: HomeController import
 
 const app = express();
@@ -24,21 +23,14 @@ wss.on("connection", (ws) => {
     console.log("New WebSocket client connected");
 });
 
-// Kontroller példányok és lekérdezés indítása
-const entryController = new EntryController(wss);
-entryController.startChecking();
-
-const homeController = new HomeController(wss); // Új: home controller példány
-homeController.startChecking();                 // Új: indítás
+const homeController = new HomeController(wss);
+const homeRoutes = require("./routes/index")(homeController); // ⬅ átadod
 
 // Route-ok
-const homeRoutes = require("./routes/index");
 const apiRoutes = require("./routes/api");
-const entryRoutes = require("./routes/entry");
 
 app.use("/", homeRoutes);
 app.use("/api", apiRoutes);
-app.use("/", entryRoutes);
 
 // Szerver indítás
 const PORT = process.env.PORT || 3333;
