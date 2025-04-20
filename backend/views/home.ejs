@@ -2,10 +2,230 @@
 <html lang="hu">
 <head>
     <meta charset="UTF-8">
+    <title>Valós idejű belépések</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MVC App</title>
+    <link rel="stylesheet" href="/public/css/styles.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        .main-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .notification-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        #messages {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card-msg {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        .card-msg img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        .card-msg .text-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .card-msg .text-content .name-status {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .card-msg .text-content .name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .card-msg .text-content .status {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .card-msg .text-content .time {
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            background-color: #CCCCCC;
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-left img {
+            width: 120px;
+        }
+
+        .footer-left h2 {
+            font-size: 18px;
+        }
+
+        .footer-left a {
+            color: #c79b5d;
+            text-decoration: none;
+        }
+
+        .footer-right img {
+            width: 100px;
+        }
+
+        .footer-links a {
+            color: white;
+            margin-right: 10px;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    <h1><%= message %></h1>
+
+<div class="main-container">
+    <div class="sidebar">
+        <img src="/public/img/logo--inverse.png" alt="Logo" class="logo">
+        <ul>
+            <li><a href="#"><span class="label">Kezdőlap</span></a></li>
+            <li><a href="#"><span class="label">Statisztikák</span></a></li>
+            <li><a href="#"><span class="label">Felhasználók</span></a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1 class="notification-title">Valós idejű belépési események</h1>
+        <div id="messages"></div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-left">
+        <img src="/public/img/dormlogo.png" alt="Dormitory Logo">
+        <h2>Kollégiumi beléptető rendszer</h2>
+        <p>Fejlesztette: <a href="mailto:email@valaki.hu">email@valaki.hu</a></p>
+        <div class="footer-links">
+            <a href="#">Impresszum</a>
+            <a href="#">Adatkezelés</a>
+        </div>
+    </div>
+    <div class="footer-right">
+        <img src="/public/img/hallgato.png" alt="Hallgató">
+    </div>
+</footer>
+
+<script>
+    const ws = new WebSocket("ws://localhost:3333");
+
+    ws.onmessage = (event) => {
+        const data = event.data;
+        const div = document.createElement("div");
+        div.className = "card-msg";
+
+        // Szétválasztjuk az utolsó kötőjel mentén
+        const lastDashIndex = data.lastIndexOf(" - ");
+        let message = data;
+        let timestamp = "";
+
+        if (lastDashIndex !== -1) {
+            message = data.substring(0, lastDashIndex);
+            timestamp = data.substring(lastDashIndex + 3);
+        }
+
+        let name = "Ismeretlen";
+        let status = message;
+
+        if (message.includes(" - ")) {
+            const [n, s] = message.split(" - ");
+            name = n;
+            status = s;
+        }
+
+        const isError = status.includes("Ismeretlen") || status.includes("Tulajdonos nélküli");
+        const avatar = isError ? "/public/img/error.png" : "/public/img/hallgato.png";
+
+        // Magyarosított, jól olvasható idő
+        let displayTime;
+        if (timestamp) {
+            const d = new Date(timestamp);
+            displayTime = d.toLocaleString("hu-HU", {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).replace(',', '');
+        } else {
+            const now = new Date();
+            displayTime = now.toLocaleString("hu-HU", {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).replace(',', '');
+        }
+
+        const statusHTML = `<div class="status" style="${isError ? 'color: red;' : ''}">${status}</div>`;
+        const timeHTML = `<div class="time" style="${isError ? 'color: red; font-weight: bold;' : ''}">${displayTime}</div>`;
+
+        div.innerHTML = `
+            <img src="${avatar}" alt="Avatar">
+            <div class="text-content">
+                <div class="name-status">
+                    <div class="name">${name}</div>
+                    ${statusHTML}
+                </div>
+                ${timeHTML}
+            </div>
+        `;
+
+        document.getElementById("messages").prepend(div);
+    };
+</script>
+
 </body>
 </html>
