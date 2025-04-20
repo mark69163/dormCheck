@@ -184,7 +184,8 @@
 </div>
 
 <script>
-    const ws = new WebSocket("ws://localhost:3333");
+    const wsProtocol = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${wsProtocol}://${location.host}`);
 
     ws.onmessage = (event) => {
         const data = event.data;
