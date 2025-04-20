@@ -3,15 +3,19 @@ const db = require("../config/db");
 class HomeController {
     constructor(wss) {
         this.wss = wss;
-        this.lastCheckTime = null; // Dinamikusan indul újra, ha újra megnyitják az oldalt
+        this.lastCheckTime = null;
+        this.intervalStarted = false;
     }
 
     startChecking() {
+        if (this.intervalStarted) return;
+        this.intervalStarted = true;
+
         setInterval(() => {
             if (!this.lastCheckTime) return;
 
             db.query(`
-                SELECT c.*, u.firstname, u.lastname 
+                SELECT c.*, u.firstname, u.lastname, u.img_path 
                 FROM CARDCHECKS c
                 LEFT JOIN USER u ON c.userid = u.userid
                 WHERE c.check_time > ?
@@ -33,12 +37,12 @@ class HomeController {
                         } else if (record.cardid !== "UNKNOWN" && record.userid === -1) {
                             message = `Tulajdonos nélküli kártyával próbáltak meg belépni! - ${record.check_time}`;
                         } else if (record.cevent === "ENTRY" || record.cevent === "AUTHORIZED") {
-                            message = `${record.firstname} ${record.lastname} - Belépett! - ${record.check_time}`;
+                            message = `${record.firstname} ${record.lastname} - Belépett! - ${record.check_time} - ${record.img_path}`;
                         }
 
                         if (message !== "") {
                             this.wss.clients.forEach(client => {
-                                if (client.readyState === 1) { // WebSocket.OPEN
+                                if (client.readyState === 1) {
                                     client.send(message);
                                 }
                             });
@@ -46,13 +50,30 @@ class HomeController {
                     });
                 }
             });
-        }, 1000); // 1 másodpercenként
+        }, 1000);
     }
 
     index(req, res) {
-        // Mikor a főoldalt újratöltik, akkor lenullázza a figyelési időt
-        this.lastCheckTime = new Date().toISOString().slice(0, 19).replace("T", " ");
-        res.render("home");
+        db.query(`
+        SELECT check_time 
+        FROM CARDCHECKS 
+        ORDER BY check_time DESC 
+        LIMIT 1
+    `, (err, results) => {
+            if (err) {
+                console.error("Nem sikerült lekérni az utolsó check_time-ot:", err);
+                return res.status(500).send("Hiba történt.");
+            }
+
+            if (results.length > 0) {
+                this.lastCheckTime = results[0].check_time;
+            } else {
+                this.lastCheckTime = new Date().toISOString().slice(0, 19).replace("T", " ");
+            }
+
+            this.startChecking(); // csak itt indítjuk el, amikor már van érvényes idő
+            res.render("home");
+        });
     }
 }
 
